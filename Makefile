@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -std=c99 -O3 -Wall -Wpedantic
-# CFLAGS = -std=c99 -O3 -Wall -Wpedantic -g
+CFLAGS = -std=c99 -O3 -Wall -Wpedantic -g
 
 SRC = image_tagger.c
 TARGET = image_tagger
