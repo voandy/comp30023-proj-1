@@ -1,12 +1,17 @@
-CC = gcc
-CFLAGS = -std=c99 -O3 -Wall -Wpedantic
-CFLAGS = -std=c99 -O3 -Wall -Wpedantic -g
+OBJS	= image_tagger.o send_page.o
+HEADER	= send_page.h
+OUT	= image_tagger
+CC	 = gcc
+FLAGS	 = -c -Wall -Wpedantic -g
 
-SRC = image_tagger.c
-TARGET = image_tagger
+all: $(OBJS)
+	$(CC) -g $(OBJS) -o $(OUT)
 
-all: $(SRC)
-	$(CC) $(SRC) -o $(TARGET) $(CFLAGS)
+image_tagger.o: image_tagger.c $(HEADER)
+	$(CC) $(FLAGS) image_tagger.c -std=c99
+
+send_page.o: send_page.c $(HEADER)
+	$(CC) $(FLAGS) send_page.c -std=c99
 
 clean:
-	rm -f $(TARGET) *.o
+	rm -f $(OUT) *.o
