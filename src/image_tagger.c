@@ -14,7 +14,7 @@
 
 int main(int argc, char *argv[])
 {
-  SERVER_STATE state = INITIALISING;
+  server_state state = INITIALISING;
 
   int server_ip;
   int server_port;
@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
   return 0;
 }
 
-void listen_for_reqs(SERVER_STATE * state, int welcome_socket)
+void listen_for_reqs(server_state * state, int welcome_socket)
 {
   // setup client sockets
   fd_set client_sockets;
@@ -85,8 +85,12 @@ void listen_for_reqs(SERVER_STATE * state, int welcome_socket)
   FD_SET(welcome_socket, &client_sockets);
   int socket_max = welcome_socket;
 
+  // initialise players
+  player p1;
+  player p2;
+  int player_count = 0;
 
-  while (*state == WAITING_FOR_PLAYERS)
+  while (1)
   {
     // monitor file descriptors
     fd_set readfds = client_sockets;
@@ -128,7 +132,7 @@ void listen_for_reqs(SERVER_STATE * state, int welcome_socket)
           }
         }
         // a request is sent from the client
-        else if (!handle_http_request(i, state))
+        else if (!handle_http_request(i, state, &p1, &p2, &player_count))
         {
           close(i);
           FD_CLR(i, &client_sockets);
