@@ -10,6 +10,7 @@
 #include <sys/socket.h>
 
 #include "send_page.h"
+#include "image_tagger.h"
 
 #define PATH_INTRO "html_files/1_intro.html"
 #define PATH_START "html_files/2_start.html"
@@ -22,8 +23,6 @@
 #define HTTP_200_FORMAT "HTTP/1.1 200 OK\r\n\
 Content-Type: text/html\r\n\
 Content-Length: %ld\r\n\r\n"
-
-#define MAX_BUFFER 2049
 
 bool send_page(PAGE_TYPE page_type, int socket)
 {

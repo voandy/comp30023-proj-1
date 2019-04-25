@@ -9,36 +9,8 @@
 #include <unistd.h>
 #include <sys/select.h>
 
-#include "send_page.h"
-
-#define MAX_BUFFER 2049
-#define MAX_URL_SIZE 256
-
-typedef enum
-{
-  INITIALISING,
-  WAITING_FOR_PLAYERS,
-  PLAYING_GAME
-} SERVER_STATE;
-
-typedef enum
-{
-    GET,
-    POST,
-    UNKNOWN
-} METHOD;
-
-struct http_req_header
-{
-  METHOD method;
-  char url[MAX_URL_SIZE];
-  char protocol[MAX_URL_SIZE];
-};
-
-void wait_for_players(SERVER_STATE * state, int welcome_socket);
-bool handle_http_request(int socket, SERVER_STATE * state);
-struct http_req_header parse_req_header(char * req_header_raw);
-METHOD parse_method(char * method_raw);
+#include "image_tagger.h"
+#include "handle_http_request.h"
 
 int main(int argc, char *argv[])
 {
@@ -100,12 +72,12 @@ int main(int argc, char *argv[])
     argv[1], argv[2]);
 
   state = WAITING_FOR_PLAYERS;
-  wait_for_players(&state, welcome_socket);
+  listen_for_reqs(&state, welcome_socket);
 
   return 0;
 }
 
-void wait_for_players(SERVER_STATE * state, int welcome_socket)
+void listen_for_reqs(SERVER_STATE * state, int welcome_socket)
 {
   // setup client sockets
   fd_set client_sockets;
@@ -164,87 +136,4 @@ void wait_for_players(SERVER_STATE * state, int welcome_socket)
       }
     }
   }
-}
-
-// handles http request from a client socket
-bool handle_http_request(int socket, SERVER_STATE * state)
-{
-  printf("new http req\n");
-  char buffer[MAX_BUFFER] = {0};
-  int bytes_read;
-  char * req_header_raw;
-  struct http_req_header req_header;
-
-  // read request header
-  bytes_read = read(socket, buffer, MAX_BUFFER);
-  if (bytes_read <= 0)
-  {
-    if (bytes_read < 0)
-    {
-      perror("Failed to read from socket");
-      exit(EXIT_FAILURE);
-    } else {
-      printf("Socket %d closed the connection\n", socket);
-      return false;
-    }
-  }
-
-  // add a null byte to signify the end of the string
-  buffer[bytes_read] = 0;
-
-  // parse the request header into a http_req_header
-  req_header_raw = buffer;
-  req_header = parse_req_header(req_header_raw);
-
-  switch(req_header.method)
-  {
-    case GET:
-      if (!send_page(INTRO, socket))
-      {
-        return false;
-      }
-      break;
-    case POST:
-      printf("%s\n", "Received post request");
-      break;
-    default:
-      printf("%s\n", "Invalid request");
-  }
-
-  return true;
-}
-
-// given a string of raw data returns a http_req_header
-struct http_req_header parse_req_header(char * req_header_raw)
-{
-  struct http_req_header req_header = {0};
-  char * token;
-  char delim[] = " \n";
-
-  token = strtok(req_header_raw, delim);
-
-  req_header.method = parse_method(token);
-  token = strtok(0, delim);
-
-  strcpy(req_header.url, token);
-  token = strtok(0, delim);
-
-  strcpy(req_header.protocol, token);
-
-  return req_header;
-}
-
-// given a string returns the associated method
-METHOD parse_method(char * method_raw)
-{
-  METHOD method = UNKNOWN;
-  if (strcmp(method_raw, "GET") == 0)
-  {
-    method = GET;
-  }
-  else if (strcmp(method_raw, "POST") == 0)
-  {
-    method = POST;
-  }
-  return method;
 }
