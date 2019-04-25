@@ -42,7 +42,8 @@ int main(int argc, char *argv[])
 
   // reuse the welcome socket
   int const reuse = 1;
-  if (setsockopt(welcome_socket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) < 0)
+  if (setsockopt(welcome_socket, SOL_SOCKET, SO_REUSEADDR, &reuse,
+    sizeof(int)) < 0)
   {
     perror("Faile to create welcome socket");
     exit(EXIT_FAILURE);
@@ -55,7 +56,8 @@ int main(int argc, char *argv[])
   serv_addr.sin_port = server_port;
 
   // bind the socket
-  if (bind(welcome_socket, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+  if (bind(welcome_socket, (struct sockaddr *)&serv_addr,
+    sizeof(serv_addr)) < 0)
   {
     perror("Failed to bind socket");
     exit(EXIT_FAILURE);
@@ -111,7 +113,8 @@ void listen_for_reqs(server_state * state, int welcome_socket)
         {
           struct sockaddr_in cliaddr;
           socklen_t clilen = sizeof(cliaddr);
-          int newsockfd = accept(welcome_socket, (struct sockaddr *)&cliaddr, &clilen);
+          int newsockfd = accept(welcome_socket, (struct sockaddr *)&cliaddr,
+            &clilen);
           if (newsockfd < 0)
           perror("accept");
           else
@@ -126,7 +129,8 @@ void listen_for_reqs(server_state * state, int welcome_socket)
             printf(
               "New connection from %s on socket %d\n",
               // convert to human readable string
-              inet_ntop(cliaddr.sin_family, &cliaddr.sin_addr, ip, INET_ADDRSTRLEN),
+              inet_ntop(cliaddr.sin_family, &cliaddr.sin_addr, ip,
+                INET_ADDRSTRLEN),
               newsockfd
             );
           }

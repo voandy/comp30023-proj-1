@@ -19,18 +19,17 @@
 #define PATH_DISCARDED "html_files/5_discarded.html"
 #define PATH_ENDGAME "html_files/6_endgame.html"
 #define PATH_GAMEOVER "html_files/7_gameover.html"
+#define TEMP_FILE "html_files/temp.html"
 
 #define HTTP_200_FORMAT "HTTP/1.1 200 OK\r\n\
 Content-Type: text/html\r\n\
 Content-Length: %ld\r\n\r\n"
 
-bool send_page(PAGE_TYPE page_type, int socket)
+static bool send_html(char * file_path, int socket);
+
+bool send_page(PAGE_TYPE page_type, int socket, char * insert_string)
 {
   char * path;
-  struct stat file_stats;
-  char buffer[MAX_BUFFER] = {0};
-  int size_content;
-  int filefd;
 
   switch(page_type){
     case INTRO: path = PATH_INTRO;
@@ -51,8 +50,55 @@ bool send_page(PAGE_TYPE page_type, int socket)
       printf("Invalid page\n");
       return false;
   }
+
+  if (insert_string){
+    // create a temporary file with insert_string inserted in place of #
+    FILE *html = fopen(path, "r");
+    FILE *temp = fopen(TEMP_FILE, "w");
+
+    int c = fgetc(html);
+    while (c != '#')
+    {
+      fputc(c, temp);
+      c = fgetc(html);
+    }
+
+    fputs(insert_string, temp);
+    c = fgetc(html);
+
+    while (c != EOF)
+    {
+      fputc(c, temp);
+      c = fgetc(html);
+    }
+
+    fclose(html);
+    fclose(temp);
+
+    // send the newly created temp file
+    if (!send_html(TEMP_FILE, socket)){
+      return false;
+      remove(TEMP_FILE);
+    }
+    // delete the temp file
+    remove(TEMP_FILE);
+  } else {
+    if (!send_html(path, socket)){
+      return false;
+    }
+  }
+  return true;
+}
+
+// send the html file at file_path to socket
+static bool send_html(char * file_path, int socket) {
+  char buffer[MAX_BUFFER] = {0};
+  int size_content;
+  int filefd;
+  struct stat file_stats;
+
   // get stats if html file
-  stat(path, &file_stats);
+  stat(file_path, &file_stats);
 
   // compose http header
   size_content = sprintf(buffer, HTTP_200_FORMAT, file_stats.st_size);
@@ -64,8 +110,7 @@ bool send_page(PAGE_TYPE page_type, int socket)
     return false;
   }
 
-  // send the html file
-  filefd = open(path, O_RDONLY);
+  filefd = open(file_path, O_RDONLY);
   do
   {
     size_content = read(filefd, buffer, MAX_BUFFER - 1);
@@ -74,7 +119,7 @@ bool send_page(PAGE_TYPE page_type, int socket)
 
   if (size_content < 0)
   {
-    printf("Failed to send file\n");
+    printf("Failed to send html file\n");
     close(filefd);
     return false;
   }

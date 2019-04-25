@@ -2,6 +2,7 @@
 #define IMAGE_TAGGER_H
 
 #define MAX_BUFFER 2049
+
 #define MAX_NAME_LEN 128
 #define MAX_GUESSES 512
 #define MAX_GUESS_LEN 128
@@ -10,6 +11,7 @@ typedef enum
 {
   INITIALISING,
   WAITING_FOR_PLAYERS,
+  READY_TO_PLAY,
   PLAYING_GAME
 } server_state;
 

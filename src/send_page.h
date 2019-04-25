@@ -12,6 +12,6 @@ typedef enum
   GAMEOVER
 } PAGE_TYPE;
 
-bool send_page(PAGE_TYPE page_type, int socketfd);
+bool send_page(PAGE_TYPE page_type, int socketfd, char * insert_string);
 
 #endif
