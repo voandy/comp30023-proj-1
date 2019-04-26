@@ -11,14 +11,14 @@ typedef enum
 {
   INITIALISING,
   WAITING_FOR_PLAYERS,
-  READY_TO_PLAY,
   PLAYING_GAME
 } server_state;
 
 typedef struct
 {
-  int player_no;
+  int player_socket;
   char player_name[MAX_NAME_LEN];
+  bool ready;
   char guesses[MAX_GUESSES][MAX_GUESS_LEN];
   int guesses_made;
 }player;
