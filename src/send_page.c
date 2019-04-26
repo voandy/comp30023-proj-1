@@ -51,8 +51,6 @@ void send_page(PAGE_TYPE page_type, int socket, char * insert_string)
     exit(EXIT_FAILURE);
   }
 
-  printf("Sending: %s\n", path);
-
   if (insert_string){
     // create a temporary file with insert_string inserted in place of #
     FILE *html = fopen(path, "r");

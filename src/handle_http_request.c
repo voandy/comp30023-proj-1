@@ -13,6 +13,7 @@
 static void init_player(player * player, struct http_req_header req_header,
   int player_count, int socketfd);
 static player * select_player(int socket, player * p1, player * p2);
+static player * select_opponent(int socket, player * p1, player * p2);
 
 // handles http request from a client socket
 bool handle_http_request(int socket, server_state * state,
@@ -64,6 +65,12 @@ bool handle_http_request(int socket, server_state * state,
       {
         send_page(FIRST_TURN, socket, NULL);
         select_player(socket, p1, p2)->ready = true;
+
+        // if both players are ready set state to playing game
+        if (p1->ready && p2->ready)
+        {
+          *state = PLAYING_GAME;
+        }
       } else {
         // fist get request from new client
         send_page(INTRO, socket, NULL);
@@ -106,7 +113,16 @@ bool handle_http_request(int socket, server_state * state,
 
     // both players playing the game and making guesses
     case PLAYING_GAME:
-    make_guess(req_header.keyword, select_player(socket, p1, p2));
+    if(make_guess(req_header.keyword, select_player(socket, p1, p2),
+      select_opponent(socket, p1, p2)))
+    {
+      // player has won and the game is over
+      *state = GAME_OVER;
+    }
+    break;
+
+    case GAME_OVER:
+    send_page(ENDGAME, socket, NULL);
     break;
 
     default:
@@ -114,13 +130,6 @@ bool handle_http_request(int socket, server_state * state,
     exit(EXIT_FAILURE);
   }
 
-  // if both players are ready set state to playing game
-  if (p1->ready && p2->ready)
-  {
-    *state = PLAYING_GAME;
-  }
-
-  printf("State: %d\n", *state);
   return true;
 }
 
@@ -146,6 +155,16 @@ static player * select_player(int socket, player * p1, player * p2)
     perror("Player not registered");
     exit(EXIT_FAILURE);
   }
+}
+
+// select the opponent of the current player
+static player * select_opponent(int socket, player * p1, player * p2)
+{
+  if (p1->player_socket == socket)
+  {
+    return p2;
+  }
+  return p1;
 }
 
 // given a string of raw data returns a http_req_header
