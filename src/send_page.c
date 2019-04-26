@@ -9,8 +9,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include "send_page.h"
 #include "image_tagger.h"
+#include "send_page.h"
 
 #define PATH_INTRO "html_files/1_intro.html"
 #define PATH_START "html_files/2_start.html"
