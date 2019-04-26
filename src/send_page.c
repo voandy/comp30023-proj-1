@@ -25,30 +25,30 @@
 Content-Type: text/html\r\n\
 Content-Length: %ld\r\n\r\n"
 
-static bool send_html(char * file_path, int socket);
+static void send_html(char * file_path, int socket);
 
-bool send_page(PAGE_TYPE page_type, int socket, char * insert_string)
+void send_page(PAGE_TYPE page_type, int socket, char * insert_string)
 {
   char * path;
 
   switch(page_type){
     case INTRO: path = PATH_INTRO;
-      break;
+    break;
     case START: path = PATH_START;
-      break;
+    break;
     case FIRST_TURN: path = PATH_FIRST_TURN;
-      break;
+    break;
     case ACCEPTED: path = PATH_ACCEPTED;
-      break;
+    break;
     case DISCARDED: path = PATH_DISCARDED;
-      break;
+    break;
     case ENDGAME: path = PATH_ENDGAME;
-      break;
+    break;
     case GAMEOVER: path = PATH_GAMEOVER;
-      break;
+    break;
     default:
-      printf("Invalid page\n");
-      return false;
+    perror("Not a valid page\n");
+    exit(EXIT_FAILURE);
   }
 
   printf("Sending: %s\n", path);
@@ -78,22 +78,17 @@ bool send_page(PAGE_TYPE page_type, int socket, char * insert_string)
     fclose(temp);
 
     // send the newly created temp file
-    if (!send_html(TEMP_FILE, socket)){
-      return false;
-      remove(TEMP_FILE);
-    }
+    send_html(TEMP_FILE, socket);
+
     // delete the temp file
     remove(TEMP_FILE);
   } else {
-    if (!send_html(path, socket)){
-      return false;
-    }
+    send_html(path, socket);
   }
-  return true;
 }
 
 // send the html file at file_path to socket
-static bool send_html(char * file_path, int socket) {
+static void send_html(char * file_path, int socket) {
   char buffer[MAX_BUFFER] = {0};
   int size_content;
   int filefd;
@@ -108,8 +103,8 @@ static bool send_html(char * file_path, int socket) {
   // send http header
   if (write(socket, buffer, size_content) < 0)
   {
-    printf("Failed to send header\n");
-    return false;
+    perror("Failed to send header\n");
+    exit(EXIT_FAILURE);
   }
 
   filefd = open(file_path, O_RDONLY);
@@ -121,11 +116,10 @@ static bool send_html(char * file_path, int socket) {
 
   if (size_content < 0)
   {
-    printf("Failed to send html file\n");
     close(filefd);
-    return false;
+    perror("Failed to send html file\n");
+    exit(EXIT_FAILURE);
   }
 
   close(filefd);
-  return true;
 }
