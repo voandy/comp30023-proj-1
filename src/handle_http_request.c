@@ -171,8 +171,7 @@ static void register_player(player * p1, player * p2, int * player_count,
     break;
 
     default:
-    perror("Too many players!");
-    exit(EXIT_FAILURE);
+    printf("Too many players!");
   }
 }
 
