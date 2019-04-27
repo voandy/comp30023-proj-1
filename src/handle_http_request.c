@@ -199,7 +199,6 @@ static void reset_game(player * p1, player * p2)
 // given a socket number returns the player associated with that socket
 static player * select_player(int socket, player * p1, player * p2)
 {
-  printf("SOCKET NO: %d\n", socket);
   if (p1->player_socket == socket)
   {
     return p1;
@@ -271,12 +270,12 @@ struct http_req_header parse_req_header(char * req_header_raw)
   // get username cookie
   result = strstr(req_header_raw, "username=");
   if (result) {
+    req_header.cookie = true;
     result+= 9;
     // remove text after keyword
     char delim[] = "\r\n";
     result = strtok(result, delim);
     strcpy(req_header.user_cookie, result);
-    printf("COOKIE: %s\n", req_header.user_cookie);
   }
 
   // setup strtok

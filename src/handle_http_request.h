@@ -19,6 +19,7 @@ struct http_req_header
   bool start;
   bool quit;
   bool guess;
+  bool cookie;
 
   char user[MAX_STR_SIZE];
   char keyword[MAX_STR_SIZE];
