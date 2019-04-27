@@ -2,7 +2,7 @@ OBJS	= image_tagger.o send_page.o handle_http_request.o play_game.o
 HEADER	= src/image_tagger.h src/send_page.h src/handle_http_request.h src/play_game.h
 OUT	= image_tagger
 CC	 = gcc
-FLAGS	 = -c -Wall -Wpedantic -g
+FLAGS	 = -c -Wall -Wpedantic #-g
 
 all: mkbin $(OBJS)
 	$(CC) -g bin/image_tagger.o bin/send_page.o bin/handle_http_request.o bin/play_game.o -o $(OUT)

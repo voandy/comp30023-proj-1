@@ -22,8 +22,6 @@ static player * select_opponent(int socket, player * p1, player * p2);
 bool handle_http_request(int socket, server_state * state,
   player * p1, player * p2, int * player_count)
 {
-  printf("STAGE: %d\n", *state);
-
   char buffer[MAX_BUFFER] = {0};
   int bytes_read;
   char * req_header_raw;
