@@ -22,6 +22,7 @@ struct http_req_header
 
   char user[MAX_STR_SIZE];
   char keyword[MAX_STR_SIZE];
+  char user_cookie[MAX_STR_SIZE];
 };
 
 bool handle_http_request(int socket, server_state * state,

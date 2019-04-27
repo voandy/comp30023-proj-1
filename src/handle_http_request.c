@@ -10,6 +10,8 @@
 #include "send_page.h"
 #include "play_game.h"
 
+static void register_player(player * p1, player * p2, int * player_count,
+  int socket, struct http_req_header req_header);
 static void init_player(player * player, struct http_req_header req_header,
   int player_count, int socketfd);
 static void reset_game(player * p1, player * p2);
@@ -62,8 +64,8 @@ bool handle_http_request(int socket, server_state * state,
     {
       case GET:
       // client ready to play
-      if(req_header.start)
-      {
+      if (req_header.start) {
+        // send first turn page and check if other player is ready
         send_page(FIRST_TURN, socket, NULL);
         select_player(socket, p1, p2)->ready = true;
 
@@ -84,23 +86,8 @@ bool handle_http_request(int socket, server_state * state,
       {
         send_page(DISCARDED, socket, NULL);
       } else {
-        switch(*player_count)
-        {
-          // initialise players
-          case 0:
-          init_player(p1, req_header, *player_count, socket);
-          *player_count += 1;
-          break;
-
-          case 1:
-          init_player(p2, req_header, *player_count, socket);
-          *player_count += 1;
-          break;
-
-          default:
-          perror("Too many players!");
-          exit(EXIT_FAILURE);
-        }
+        // register player
+        register_player(p1, p2, player_count, socket, req_header);
         //  client has sent username to server
         send_page(START, socket, req_header.user);
       }
@@ -168,6 +155,29 @@ bool handle_http_request(int socket, server_state * state,
   return true;
 }
 
+// registers player
+static void register_player(player * p1, player * p2, int * player_count,
+  int socket, struct http_req_header req_header)
+{
+  switch(*player_count)
+  {
+    // initialise players
+    case 0:
+    init_player(p1, req_header, *player_count, socket);
+    *player_count += 1;
+    break;
+
+    case 1:
+    init_player(p2, req_header, *player_count, socket);
+    *player_count += 1;
+    break;
+
+    default:
+    perror("Too many players!");
+    exit(EXIT_FAILURE);
+  }
+}
+
 // initialise players
 static void init_player(player * player, struct http_req_header req_header,
   int player_count, int socketfd)
@@ -214,7 +224,8 @@ static player * select_opponent(int socket, player * p1, player * p2)
 // given a string of raw data returns a http_req_header
 struct http_req_header parse_req_header(char * req_header_raw)
 {
-  struct http_req_header req_header = {0};
+  struct http_req_header req_header;
+  memset(&req_header, 0, sizeof req_header);
   char * result;
 
   // get start status
@@ -251,12 +262,21 @@ struct http_req_header parse_req_header(char * req_header_raw)
   if (result)
   {
     result+= 8;
-
     // remove text after keyword
     char delim[] = "&";
     result = strtok(result, delim);
-
     strcpy(req_header.keyword, result);
+  }
+
+  // get username cookie
+  result = strstr(req_header_raw, "username=");
+  if (result) {
+    result+= 9;
+    // remove text after keyword
+    char delim[] = "\r\n";
+    result = strtok(result, delim);
+    strcpy(req_header.user_cookie, result);
+    printf("COOKIE: %s\n", req_header.user_cookie);
   }
 
   // setup strtok

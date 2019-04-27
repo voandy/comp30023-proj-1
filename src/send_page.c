@@ -25,7 +25,12 @@
 Content-Type: text/html\r\n\
 Content-Length: %ld\r\n\r\n"
 
-static void send_html(char * file_path, int socket);
+#define HTTP_COOKIE "HTTP/1.1 200 OK\r\n\
+Content-Type: text/html\r\n\
+Content-Length: %ld\r\n\
+Set-Cookie: username=%s\r\n\r\n"
+
+static void send_html(char * file_path, int socket, char * cookie);
 
 void send_page(PAGE_TYPE page_type, int socket, char * insert_string)
 {
@@ -35,6 +40,8 @@ void send_page(PAGE_TYPE page_type, int socket, char * insert_string)
     case INTRO: path = PATH_INTRO;
     break;
     case START: path = PATH_START;
+    break;
+    case START_COOKIE: path = PATH_START;
     break;
     case FIRST_TURN: path = PATH_FIRST_TURN;
     break;
@@ -76,17 +83,24 @@ void send_page(PAGE_TYPE page_type, int socket, char * insert_string)
     fclose(temp);
 
     // send the newly created temp file
-    send_html(TEMP_FILE, socket);
+    if (page_type == START)
+    {
+      // send with cookie on first register
+      send_html(TEMP_FILE, socket, insert_string);
+    } else {
+      send_html(TEMP_FILE, socket, NULL);
+    }
 
     // delete the temp file
     remove(TEMP_FILE);
   } else {
-    send_html(path, socket);
+    send_html(path, socket, NULL);
   }
 }
 
-// send the html file at file_path to socket
-static void send_html(char * file_path, int socket) {
+// send the html file at file_path to socket, if cookie present also
+// send a cookie with the header
+static void send_html(char * file_path, int socket, char * cookie) {
   char buffer[MAX_BUFFER] = {0};
   int size_content;
   int filefd;
@@ -96,7 +110,12 @@ static void send_html(char * file_path, int socket) {
   stat(file_path, &file_stats);
 
   // compose http header
-  size_content = sprintf(buffer, HTTP_200_FORMAT, file_stats.st_size);
+  if (cookie)
+  {
+    size_content = sprintf(buffer, HTTP_COOKIE, file_stats.st_size, cookie);
+  } else {
+    size_content = sprintf(buffer, HTTP_200_FORMAT, file_stats.st_size);
+  }
 
   // send http header
   if (write(socket, buffer, size_content) < 0)

@@ -5,6 +5,7 @@ typedef enum
 {
   INTRO,
   START,
+  START_COOKIE,
   FIRST_TURN,
   ACCEPTED,
   DISCARDED,
