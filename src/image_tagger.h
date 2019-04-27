@@ -12,7 +12,8 @@ typedef enum
   INITIALISING,
   WAITING_FOR_PLAYERS,
   PLAYING_GAME,
-  GAME_OVER
+  GAME_OVER,
+  NEW_GAME
 } server_state;
 
 typedef struct

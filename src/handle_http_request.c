@@ -12,6 +12,7 @@
 
 static void init_player(player * player, struct http_req_header req_header,
   int player_count, int socketfd);
+static void reset_game(player * p1, player * p2);
 static player * select_player(int socket, player * p1, player * p2);
 static player * select_opponent(int socket, player * p1, player * p2);
 
@@ -19,6 +20,8 @@ static player * select_opponent(int socket, player * p1, player * p2);
 bool handle_http_request(int socket, server_state * state,
   player * p1, player * p2, int * player_count)
 {
+  printf("STAGE: %d\n", *state);
+
   char buffer[MAX_BUFFER] = {0};
   int bytes_read;
   char * req_header_raw;
@@ -48,9 +51,7 @@ bool handle_http_request(int socket, server_state * state,
   // if the quite button is pressed at any time the game is over
   if (req_header.quit)
   {
-    *state = WAITING_FOR_PLAYERS;
-    send_page(GAMEOVER, socket, NULL);
-    return true;
+    *state = GAME_OVER;
   }
 
   // vary based on game state
@@ -106,7 +107,7 @@ bool handle_http_request(int socket, server_state * state,
       break;
 
       default:
-      perror("Invalid request");
+      perror("Invalid request #1");
       exit(EXIT_FAILURE);
     }
     break;
@@ -117,16 +118,50 @@ bool handle_http_request(int socket, server_state * state,
       select_opponent(socket, p1, p2)))
     {
       // player has won and the game is over
-      *state = GAME_OVER;
+      *state = NEW_GAME;
+      reset_game(p1, p2);
+    }
+    break;
+
+    case NEW_GAME:
+    if (req_header.guess)
+    {
+      if (!select_player(socket, p1, p2)->ready)
+      {
+        // make a guess after the game is already over
+        send_page(ENDGAME, socket, NULL);
+      } else if (!select_opponent(socket, p1, p1)->ready) {
+        // make a guess while oppoent is not ready
+        send_page(DISCARDED, socket, NULL);
+      } else {
+        perror("Invalid request #2");
+        exit(EXIT_FAILURE);
+      }
+      break;
+    } else if (req_header.start) {
+      send_page(FIRST_TURN, socket, NULL);
+      select_player(socket, p1, p2)->ready = true;
+
+      // if both players are ready set state to playing game
+      if (p1->ready && p2->ready)
+      {
+        *state = PLAYING_GAME;
+      }
+      break;
+    } else {
+      perror("Invalid request #3");
+      exit(EXIT_FAILURE);
     }
     break;
 
     case GAME_OVER:
-    send_page(ENDGAME, socket, NULL);
+    send_page(GAMEOVER, socket, NULL);
+    printf("Socket %d closed the connection\n", socket);
+    return false;
     break;
 
     default:
-    perror("Invalid request");
+    perror("Invalid request #4");
     exit(EXIT_FAILURE);
   }
 
@@ -143,9 +178,18 @@ static void init_player(player * player, struct http_req_header req_header,
  player->guesses_made = 0;
 }
 
+static void reset_game(player * p1, player * p2)
+{
+  p1->ready = false;
+  p2->ready = false;
+  p1->guesses_made = 0;
+  p2->guesses_made = 0;
+}
+
 // given a socket number returns the player associated with that socket
 static player * select_player(int socket, player * p1, player * p2)
 {
+  printf("SOCKET NO: %d\n", socket);
   if (p1->player_socket == socket)
   {
     return p1;
